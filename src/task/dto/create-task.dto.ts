@@ -1,4 +1,20 @@
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IS_UUID,
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Length,
+} from 'class-validator';
+
+export enum TaskTag {
+  WORK = 'work',
+  STUDY = 'study',
+  HOME = 'home',
+}
 
 export class CreateTaskDto {
   @IsString({ message: 'Название должно быть строкой' })
@@ -8,5 +24,15 @@ export class CreateTaskDto {
 
   @IsOptional()
   @IsString({ message: 'Описание должно быть строкой' })
-  description: string
+  description: string;
+
+  @IsOptional()
+  @IsPositive({ message: 'Приоритет должен быть положительным числом' })
+  @IsInt({ message: 'Приоритет должен быть целым числом' })
+  priority: number;
+
+  @IsOptional()
+  @IsArray({ message: 'Теги должны быть массивом' })
+  @IsEnum(TaskTag, { each: true, message: 'Недопустимое значение тега' })
+  tags: TaskTag[];
 }

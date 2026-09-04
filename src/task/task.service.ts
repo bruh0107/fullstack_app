@@ -37,7 +37,8 @@ export class TaskService {
       title: dto.title,
       isCompleted: false,
       description: dto.description,
-
+      priority: dto.priority,
+      tags: dto.tags,
     };
 
     this.tasks.push(newTask);
