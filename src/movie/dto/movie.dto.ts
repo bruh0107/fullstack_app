@@ -12,6 +12,8 @@ export class MovieDto {
   @IsNotEmpty() @IsString()
   title: string
 
+  description?: string
+
   @IsNotEmpty()
   @IsInt()
   @Min(1888)
