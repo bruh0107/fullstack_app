@@ -12,10 +12,10 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     MovieModule,
     ReviewModule,
     ActorModule,
-    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
