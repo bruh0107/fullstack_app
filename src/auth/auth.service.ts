@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { RegisterRequest } from './dto/register.dto.js';
 import { hash, verify } from 'argon2';
@@ -6,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt.interface.js';
 import { LoginRequest } from './dto/login.dto.js';
-import type { Response } from 'express'
+import type { Response, Request } from 'express';
 import { isDev } from '../utils/is-dev.util.js';
 
 @Injectable()
@@ -74,12 +79,42 @@ export class AuthService {
     return this.auth(res, user.id);
   }
 
+  async refresh(req: Request, res: Response) {
+    const refreshToken = req.cookies['refreshToken'];
+
+    if (!refreshToken)
+      throw new UnauthorizedException('Недействительный refresh-токен');
+
+    const payload: JwtPayload = await this.jwtService.verifyAsync(refreshToken);
+
+    if (payload) {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: payload.id,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!user) throw new NotFoundException('Пользователь не найден');
+
+      return this.auth(res, user.id);
+    }
+  }
+
+  async logout(res: Response) {
+    this.setCookie(res, 'refreshToken', new Date(0));
+
+    return true;
+  }
+
   private auth(res: Response, id: string) {
     const { accessToken, refreshToken } = this.generateTokens(id);
 
     this.setCookie(res, refreshToken, new Date(Date.now() + 60 * 60 * 24 * 7));
 
-    return accessToken;
+    return { accessToken };
   }
 
   private generateTokens(id: string) {
@@ -97,6 +132,18 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async validate(id: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    return user;
   }
 
   private setCookie(res: Response, value: string, expires: Date) {
