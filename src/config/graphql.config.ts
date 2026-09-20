@@ -9,5 +9,6 @@ export async function getGraphQLConfig(configService: ConfigService): Promise<Ap
     autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
     sortSchema: true,
     playground: isDev(configService),
+    context: ({ req, res }: { req: Request; res: Response }) => ({ req, res }),
   };
 }
